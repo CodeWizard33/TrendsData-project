@@ -29,8 +29,8 @@ app.all('*', (req, res, next) => {
     res.status(404).send('Sorry, we could not find that route!');
 });
 
-app.listen(process.env.PORT, () => {
-    console.info('app is listening on port ' + process.env.PORT);
+app.listen(3002, () => {
+    console.info('app is listening on port 3002');
 })
 
-connectDb()
+// connectDb()

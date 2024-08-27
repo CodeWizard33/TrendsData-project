@@ -7,7 +7,7 @@ exports.getAllApiResponses = async (req, res) => {
     const allApiResponses = []
 
     try {
-        const { 0: gemeineTrends, 1: tiktokTrends, 2: netflixTrends, 3: spotifyChartTrends } = await Promise.all([await getAllGemeineTrends(), await getTiktokTrends(), await getNetflixTrends(), await getSpotifyChartTrends()])
+        const { 0: gemeineTrends, 1: tiktokTrends, 2: netflixTrends, 3: spotifyChartTrends, 4: dpaTrends, 5: gamesTrends } = await Promise.all([await getAllGemeineTrends(), await getTiktokTrends(), await getNetflixTrends(), await getSpotifyChartTrends(), await getDPATrends(), await getGamesTrends()])
         allApiResponses.push(
             {
                 "source": "Trends24",
@@ -28,6 +28,16 @@ exports.getAllApiResponses = async (req, res) => {
                 "source": "Spotify Chart Trends",
                 "url": "https://kworb.net/spotify/country/de_daily.html",
                 "data": spotifyChartTrends
+            },
+            {
+                "source": "DPA Trends",
+                "url": "https://dpa-factchecking.com/",
+                "data": dpaTrends
+            },
+            {
+                "source": "Games Trends",
+                "url": "https://www.gamestar.de/charts/",
+                "data": gamesTrends
             }
         )
 
@@ -160,10 +170,6 @@ const getNetflixTrends = async (req, res) => {
     try {
         const chartData = [];
         const response = await fetch("https://www.whats-on-netflix.com/most-popular/")
-        // if (!response.ok) {
-        //     return apiResponse('fail', "Failed to fetch data", {}, response.status, res);
-        // }
-
         const result = await response.text()
         const $ = cheerio.load(result)
         const secondBody = $('table').eq(6);
@@ -248,27 +254,41 @@ const getSpotifyChartTrends = async (req, res) => {
     }
 }
 
-// 7 trend otany hy titl des links othany hy
-exports.getDPATrends = async (req, res) => {
+// ok
+const getDPATrends = async (req, res) => {
     try {
-        const chartData = [];
         const response = await fetch("https://dpa-factchecking.com/")
-        if (!response.ok) {
-            return apiResponse('fail', "Failed to fetch data", {}, response.status, res);
-        }
-
         const result = await response.text()
         const $ = cheerio.load(result)
-        const cards = $('.columns')
+        const cards = $('.section .columns')
+        let formatedData = []
 
         cards.each((i, ele) => {
             const $ele = $(ele)
-            const desc = $ele.find('.columns .article-box').text()
-            console.log(desc, 'description', i);
 
+            const titles = $ele.find('.article-box').map((index, item) => {
+                return {
+                    title: $(item).find('h4').text(),
+                    desc: $(item).find('h3').text(),
+                }
+            }).get();
+
+            const href = $ele.find('table tbody tr').map((i, ele) => {
+                const href = $(ele).find('td a').attr('href'); // Get the href attribute of the <a> tag
+                return { href }
+            }).get();
+
+            titles.forEach((article, index) => {
+                if (href[index]) {
+                    article.href = href[index].href; // Add the href to the corresponding article object
+                }
+            });
+
+            formatedData = [...titles]
         })
 
-        return apiResponse('success', "data loaded Successfully", result, 201, res)
+
+        return formatedData
 
     } catch (error) {
         apiResponse('fail', "No data were found", {}, 500, res)
@@ -276,6 +296,7 @@ exports.getDPATrends = async (req, res) => {
     }
 }
 
+// getting upexpected data result
 exports.getPodcastTrends = async (req, res) => {
     try {
         const chartData = [];
@@ -285,21 +306,20 @@ exports.getPodcastTrends = async (req, res) => {
         }
 
         const result = await response.text()
-
-        console.log(response, result, 'res result');
-
         const $ = cheerio.load(result)
 
-        $('.top_100_charts tbody tr').each((index, ele) => {
+        $('table tbody').each((index, ele) => {
             const $ele = $(ele);
-            const pos = $ele.find('td').eq(0).text().trim();
+            console.log($ele.html());
+            const platz = $ele.find('tr .title_column font').text();
+            console.log(platz, 'platz');
 
             chartData.push({
-                pos,
+                platz,
             });
         })
 
-        return apiResponse('success', "data loaded Successfully", result, 201, res)
+        return apiResponse('success', "data loaded Successfully", chartData, 201, res)
 
     } catch (error) {
         apiResponse('fail', "No data were found", {}, 500, res)
@@ -307,6 +327,7 @@ exports.getPodcastTrends = async (req, res) => {
     }
 }
 
+// getting upexpected data result
 exports.getYoutubeChartTrends = async (req, res) => {
     try {
         const chartData = [];
@@ -357,47 +378,19 @@ exports.getYoutubeChartTrends = async (req, res) => {
     }
 }
 
+// facing issue
 exports.getYoutubeTrends = async (req, res) => {
     try {
         const chartData = [];
         const response = await fetch("https://www.youtube.com/feed/trending?app=desktop&hl=de&gl=DE")
-        if (!response.ok) {
-            return apiResponse('fail', "Failed to fetch data", {}, response.status, res);
-        }
-
         const result = await response.text()
 
-        console.log(response, result, 'res result');
+        const $ = cheerio.load(result)
 
+        console.log($.text()); // Log the entire HTML
 
-        // const $ = cheerio.load(result)
+        console.log($('#contents').length);
 
-        // $('#spotifydaily tbody tr').each((index, ele) => {
-        //     const $ele = $(ele);
-        //     const pos = $ele.find('td').eq(0).text().trim();
-        //     const artistTitle = $ele.find('td').eq(2).text().trim();
-        //     const days = $ele.find('td').eq(3).text().trim();
-        //     const peak = $ele.find('td').eq(4).text().trim();
-        //     const peakTimes = $ele.find('td').eq(5).text().trim();
-        //     const streams = $ele.find('td').eq(6).text().trim();
-        //     const streamsChange = $ele.find('td').eq(7).text().trim();
-        //     const weeklyStreams = $ele.find('td').eq(8).text().trim();
-        //     const weeklyStreamsChange = $ele.find('td').eq(9).text().trim();
-        //     const totalStreams = $ele.find('td').eq(10).text().trim();
-
-        //     chartData.push({
-        //         pos,
-        //         artistTitle,
-        //         days,
-        //         peak,
-        //         peakTimes,
-        //         streams,
-        //         streamsChange,
-        //         weeklyStreams,
-        //         weeklyStreamsChange,
-        //         totalStreams
-        //     });
-        // })
 
         return apiResponse('success', "data loaded Successfully", result, 201, res)
 
@@ -407,97 +400,76 @@ exports.getYoutubeTrends = async (req, res) => {
     }
 }
 
-exports.getGamesTrends = async (req, res) => {
+// ok
+const getGamesTrends = async (req, res) => {
     try {
-        const chartData = [];
+        let formatedData;
         const response = await fetch("https://www.gamestar.de/charts/")
-        if (!response.ok) {
-            return apiResponse('fail', "Failed to fetch data", {}, response.status, res);
-        }
 
         const result = await response.text()
+        const $ = cheerio.load(result)
 
-        console.log(response, result, 'res result');
+        $('.box-reload').each((_, ele) => {
+            const $ele = $(ele);
+
+            const data = $ele.find('.test-list .media-right').map((i, item) => {
+                return { position: i + 1, Name: $(item).find('a').text(), release: $(item).find('.info').eq(2).text() }
+            }).get()
 
 
-        // const $ = cheerio.load(result)
+            if (!formatedData) {
+                formatedData = data
+            }
+        })
 
-        // $('#spotifydaily tbody tr').each((index, ele) => {
-        //     const $ele = $(ele);
-        //     const pos = $ele.find('td').eq(0).text().trim();
-        //     const artistTitle = $ele.find('td').eq(2).text().trim();
-        //     const days = $ele.find('td').eq(3).text().trim();
-        //     const peak = $ele.find('td').eq(4).text().trim();
-        //     const peakTimes = $ele.find('td').eq(5).text().trim();
-        //     const streams = $ele.find('td').eq(6).text().trim();
-        //     const streamsChange = $ele.find('td').eq(7).text().trim();
-        //     const weeklyStreams = $ele.find('td').eq(8).text().trim();
-        //     const weeklyStreamsChange = $ele.find('td').eq(9).text().trim();
-        //     const totalStreams = $ele.find('td').eq(10).text().trim();
-
-        //     chartData.push({
-        //         pos,
-        //         artistTitle,
-        //         days,
-        //         peak,
-        //         peakTimes,
-        //         streams,
-        //         streamsChange,
-        //         weeklyStreams,
-        //         weeklyStreamsChange,
-        //         totalStreams
-        //     });
-        // })
-
-        return apiResponse('success', "data loaded Successfully", result, 201, res)
+        return formatedData;
 
     } catch (error) {
-        apiResponse('fail', "No Users were found", {}, 500, res)
+        apiResponse('fail', "No data were found", {}, 500, res)
 
     }
 }
 
 exports.getAppsTrends = async (req, res) => {
     try {
-        const chartData = [];
         const response = await fetch("https://appfigures.com/top-apps/ios-app-store/germany/iphone/top-overall")
-        if (!response.ok) {
-            return apiResponse('fail', "Failed to fetch data", {}, response.status, res);
-        }
-
         const result = await response.text()
+        const $ = cheerio.load(result)
+        const formatedData = []
 
-        console.log(response, result, 'res result');
+        $('.s418648088-0').each((index, ele) => {
+            const $ele = $(ele);
+            const freeGames = $ele.find('.s1488507463-0 a').map((i, item) => {
+                return {
+                    Position: i + 1,
+                    Name: $(item).text(),
+                }
+            }).get().slice(0, 20);
+
+            const paid = $ele.find('.s-355733509-4 a').map((i, item) => {
+                return {
+                    Position: i + 1,
+                    Name: $(item).text(),
+                }
+            }).get().slice(0, 20);
+
+            const grossing = $ele.find('.s1488507463-0').eq(2).find('a').map((i, item) => {
+                const Name = $(item).text().trim();
+                if (Name) {
+
+                    return {
+                        Position: Name.split('.')[0],
+                        Name: Name.split('. ')[1]
+                    }
+                }
+            }).get().filter(Boolean).slice(0, 20);
 
 
-        // const $ = cheerio.load(result)
+            console.log(grossing);
 
-        // $('#spotifydaily tbody tr').each((index, ele) => {
-        //     const $ele = $(ele);
-        //     const pos = $ele.find('td').eq(0).text().trim();
-        //     const artistTitle = $ele.find('td').eq(2).text().trim();
-        //     const days = $ele.find('td').eq(3).text().trim();
-        //     const peak = $ele.find('td').eq(4).text().trim();
-        //     const peakTimes = $ele.find('td').eq(5).text().trim();
-        //     const streams = $ele.find('td').eq(6).text().trim();
-        //     const streamsChange = $ele.find('td').eq(7).text().trim();
-        //     const weeklyStreams = $ele.find('td').eq(8).text().trim();
-        //     const weeklyStreamsChange = $ele.find('td').eq(9).text().trim();
-        //     const totalStreams = $ele.find('td').eq(10).text().trim();
 
-        //     chartData.push({
-        //         pos,
-        //         artistTitle,
-        //         days,
-        //         peak,
-        //         peakTimes,
-        //         streams,
-        //         streamsChange,
-        //         weeklyStreams,
-        //         weeklyStreamsChange,
-        //         totalStreams
-        //     });
-        // })
+
+        })
 
         return apiResponse('success', "data loaded Successfully", result, 201, res)
 
