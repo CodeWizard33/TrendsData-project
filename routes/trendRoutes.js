@@ -13,7 +13,7 @@ const router = express.Router();
 // router.route('/youtube-chart').get(getYoutubeChartTrends)
 // router.route('/youtube-trends').get(getYoutubeTrends)
 // router.route('/games-trends').get(getGamesTrends)
-router.route('/apps-trends').get(getAppsTrends)
+// router.route('/apps-trends').get(getAppsTrends)
 // router.route('/trends-24').get(getTrends24)
 // router.route('/netflix-top-10').get(getNetflixTop10Trends)
 router.route('/load-all-trends').get(getAllApiResponses)
