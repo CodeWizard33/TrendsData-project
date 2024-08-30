@@ -308,8 +308,6 @@ const getDPADetailsTrends = async (trendId) => {
     } else {
         id = trendId
     }
-    console.log(trendId, 'trend in in details', id);
-
     const detailResponse = await fetch(`https://dpa-factchecking.com/germany/${id}`);
     const detailResult = await detailResponse.text();
     const detail$ = cheerio.load(detailResult);
@@ -321,14 +319,16 @@ const getDPADetailsTrends = async (trendId) => {
 
         const nestedlinks = detail$(item).find('.infobox p').map((i, link) => {
             const nLink = detail$(link).text()
-            return nLink;
+            const url = detail$(link).find('a').attr('href')
+            return { nLink, url };
         }).get();
 
         return {
             title: nestedTitle,
+            url: `https://dpa-factchecking.com/germany/${id}`,
             date: nestedDate,
             description: nestedDesc,
-            links: nestedlinks
+            links: nestedlinks.splice(0, 5)
         }
     }).get();
 
