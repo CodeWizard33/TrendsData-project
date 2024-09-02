@@ -11,7 +11,7 @@ const router = express.Router();
 // router.route('/DPA-trends').get(getDPATrends)
 // router.route('/podcast-trends').get(getPodcastTrends)
 // router.route('/youtube-chart').get(getYoutubeChartTrends)
-// router.route('/youtube-trends').get(getYoutubeTrends)
+router.route('/youtube-trends').get(getYoutubeTrends)
 // router.route('/games-trends').get(getGamesTrends)
 // router.route('/apps-trends').get(getAppsTrends)
 // router.route('/trends-24').get(getTrends24)

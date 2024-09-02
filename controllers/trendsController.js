@@ -1,12 +1,14 @@
 const { apiResponse } = require("../helpers/apiResponse");
 const cheerio = require('cheerio')
+const puppeteer = require('puppeteer')
+
 
 // loading all Api's response into a single controller 
 exports.getAllApiResponses = async (req, res) => {
 
     const allApiResponses = []
     try {
-        const { 0: gemeineTrends, 1: tiktokTrends, 2: netflixTrends, 3: spotifyChartTrends, 4: dpaTrends, 5: gamesTrends, 6: appTrends } = await Promise.all([await getAllGemeineTrends(), await getTiktokTrends(), await getNetflixTrends(), await getSpotifyChartTrends(), await getDPATrends(), await getGamesTrends(), await getAppsTrends()])
+        const { 0: gemeineTrends, 1: tiktokTrends, 2: netflixTrends, 3: spotifyChartTrends, 4: dpaTrends, 5: gamesTrends, 6: appTrends, 7: podcastTrends, 8: googleTrends } = await Promise.all([await getAllGemeineTrends(), await getTiktokTrends(), await getNetflixTrends(), await getSpotifyChartTrends(), await getDPATrends(), await getGamesTrends(), await getAppsTrends(), await getPodcastTrends(), await getGoogleTrends()])
         allApiResponses.push(
             {
                 "source": "Trends24",
@@ -43,6 +45,17 @@ exports.getAllApiResponses = async (req, res) => {
                 "url": "https://appfigures.com/top-apps/ios-app-store/germany/iphone/top-overall",
                 "data": appTrends.splice(3)
             },
+            {
+                "source": "PodCast Trends",
+                "url": "https://podwatch.io/charts/",
+                "data": podcastTrends.flat().splice(0, 20)
+            },
+            {
+                "source": "Google Trends",
+                "url": "https://trends.google.de/trending?geo=DE&hl=de",
+                "data": googleTrends
+            },
+
         )
 
         return apiResponse('success', 'data loaded successfully', allApiResponses, 200, res)
@@ -98,26 +111,38 @@ const getAllGemeineTrends = async () => {
 }
 
 // issue in this controller will fix it soon
-exports.getGoogleTrends = async (req, res) => {
+const getGoogleTrends = async (req, res) => {
+    const formatedData = [];
+
     try {
-        const chartData = [];
-        const response = await fetch("https://trends.google.de/trends/trendingsearches/realtime?geo=DE&hl=de&category=all")
+        const browser = await puppeteer.launch({ headless: true });
+        const page = await browser.newPage();
 
-        const result = await response.text()
-        const $ = cheerio.load(result)
+        await page.goto('https://trends.google.de/trending?geo=DE&hl=de'); // Replace with your actual URL
+        await page.waitForSelector('.enOdEe-wZVHld-zg7Cn' || 'table');
 
-        $('body .enOdEe-wZVHld-zg7Cn').each((i, ele) => {
-            const $ele = $(ele);
-            const tbody = $ele.find('tbody');
-            console.log(tbody.html(), 'tbody -------->');
+        const data = await page.evaluate(() => {
+            const rows = Array.from(document.querySelectorAll('tbody tr'));
+            const data = rows.map(row => {
+                const Angesagt = row.querySelector('.mZ3RIc')?.innerText.trim();
+                const Suchvolumen = row.querySelector('.lqv0Cb')?.innerText.trim(); // Adjust this based on your actual structure
+                const Gestartet = row.querySelector('.vdw3Ld')?.innerText.trim(); // Adjust this based on your actual structure
+                return {
+                    Angesagt,
+                    Suchvolumen,
+                    Gestartet
+                };
+            });
 
-        })
+            return data
+        });
 
-        return apiResponse('success', "data loaded Successfully", chartData, 201, res)
+        await browser.close();
+        formatedData.push(...data)
+        return formatedData
 
     } catch (error) {
-        apiResponse('fail', "No data were found", {}, 500, res)
-
+        console.error(error);
     }
 }
 
@@ -258,7 +283,6 @@ const getDPATrends = async (req, res) => {
 
             const infoPromise = $ele.find('.column').map(async (index, item) => {
                 detailUrl = $(item).find('a').attr('href');
-                console.log(detailUrl, 'detail url');
                 const d = await getDPADetailsTrends(detailUrl)
                 return {
                     time: $(item).find('time').text(),
@@ -300,7 +324,7 @@ const getDPATrends = async (req, res) => {
     }
 }
 
-// DPA details api 
+// Ok DPA details api 
 const getDPADetailsTrends = async (trendId) => {
     let id;
     if (trendId.includes('/germany')) {
@@ -335,125 +359,171 @@ const getDPADetailsTrends = async (trendId) => {
     return details
 }
 
-// getting upexpected data result
-exports.getPodcastTrends = async (req, res) => {
+// Ok
+const getPodcastTrends = async (req, res) => {
+    const formatedData = [];
+
     try {
-        const chartData = [];
-        const response = await fetch("https://podwatch.io/charts/")
-        if (!response.ok) {
-            return apiResponse('fail', "Failed to fetch data", {}, response.status, res);
-        }
+        const browser = await puppeteer.launch({ headless: true });
+        const page = await browser.newPage();
 
-        const result = await response.text()
-        const $ = cheerio.load(result)
-        const tableHeaders = {}
+        await page.goto('https://podwatch.io/charts/'); // Replace with your actual URL
 
-        $('table').each((index, ele) => {
-            const $ele = $(ele);
+        // Wait for the specific element to be rendered by Vue.js
+        await page.waitForSelector('.top_100_charts');
 
-            const headers = $ele.find('thead tr th').map((i, item) => {
-                if ($(item).text()) {
-                    return tableHeaders[index] = $(item).text()
-                }
-            }).get()
+        // Extract the table headers and body data
+        const data = await page.evaluate(() => {
+            const headers = Array.from(document.querySelectorAll('thead tr th')).map(th => th.innerText.trim());
 
-            const tbody = $ele.find('tbody tr td').eq(0).text();
-            console.log(tbody, 'body');
+            const rows = Array.from(document.querySelectorAll('tbody tr'));
+            const chartData = rows.map(row => {
+                const Platz = row.querySelector('td').innerText.trim();
+                const Podcast = row.querySelector('a')?.innerText.trim(); // Adjust this based on your actual structure
 
-            // .map((i, item) => {
-            //     console.log($(item).html(), 'html');
-            //     $(item).html()
-            //     if ($(item).text()) {
-            //         return {
-            //             No: i + 1,
-            //             Podcast: $(item).find('a').text(),
-            //             Views: $(item).find('font font').text(),
-            //         }
-            //     }
-            // }).get()
+                return {
+                    Platz: Platz.split('.')[0],
+                    Podcast,
+                };
+            });
 
-            chartData.push(tbody)
+            return { chartData };
+        });
 
-        })
+        formatedData.push(data.chartData);
+        await browser.close();
 
-        return apiResponse('success', "data loaded Successfully", chartData, 201, res)
+        return formatedData
 
     } catch (error) {
-        apiResponse('fail', "No data were found", {}, 500, res)
-
+        console.error(error);
+        return apiResponse('fail', "No data were found", 500, res);
     }
+
 }
 
 // getting upexpected data result
 exports.getYoutubeChartTrends = async (req, res) => {
+    // try {
+    //     const chartData = [];
+    //     const response = await fetch("https://charts.youtube.com/de")
+    //     if (!response.ok) {
+    //         return apiResponse('fail', "Failed to fetch data", {}, response.status, res);
+    //     }
+
+    //     const result = await response.text()
+
+    //     console.log(response, result, 'res result');
+
+
+    //     return apiResponse('success', "data loaded Successfully", result, 201, res)
+
+    // } catch (error) {
+    //     apiResponse('fail', "No Users were found", {}, 500, res)
+
+    // }
+
+    const formatedData = [];
+
     try {
-        const chartData = [];
-        const response = await fetch("https://charts.youtube.com/de")
-        if (!response.ok) {
-            return apiResponse('fail', "Failed to fetch data", {}, response.status, res);
-        }
+        const browser = await puppeteer.launch({ headless: true });
+        const page = await browser.newPage();
 
-        const result = await response.text()
+        await page.goto('https://charts.youtube.com/de', { waitUntil: "networkidle2" }); // Replace with your actual URL
+        await page.waitForSelector('#chart-entries-container', { visible: true, timeout: 6000 });
 
-        console.log(response, result, 'res result');
+        const content = await page.content();
+        // console.log(content, 'contnet ------------->');
 
 
-        // const $ = cheerio.load(result)
 
-        // $('#spotifydaily tbody tr').each((index, ele) => {
-        //     const $ele = $(ele);
-        //     const pos = $ele.find('td').eq(0).text().trim();
-        //     const artistTitle = $ele.find('td').eq(2).text().trim();
-        //     const days = $ele.find('td').eq(3).text().trim();
-        //     const peak = $ele.find('td').eq(4).text().trim();
-        //     const peakTimes = $ele.find('td').eq(5).text().trim();
-        //     const streams = $ele.find('td').eq(6).text().trim();
-        //     const streamsChange = $ele.find('td').eq(7).text().trim();
-        //     const weeklyStreams = $ele.find('td').eq(8).text().trim();
-        //     const weeklyStreamsChange = $ele.find('td').eq(9).text().trim();
-        //     const totalStreams = $ele.find('td').eq(10).text().trim();
+        // Extract the table headers and body data
+        const data = await page.evaluate(() => {
+            const data = []
+            const entries = document.querySelectorAll('ytmc-entity-row-v2 .trendingVideoEntity');
+            // const headers = Array.from(document.querySelectorAll('#chart-entries-container')).map(th => th.innerText.trim());
 
-        //     chartData.push({
-        //         pos,
-        //         artistTitle,
-        //         days,
-        //         peak,
-        //         peakTimes,
-        //         streams,
-        //         streamsChange,
-        //         weeklyStreams,
-        //         weeklyStreamsChange,
-        //         totalStreams
-        //     });
-        // })
+            entries.forEach(entry => {
+                const rank = entry.querySelector('.rank')?.innerText.trim();
+                const title = entry.querySelector('.title')?.innerText.trim();
+                const artist = entry.querySelector('.artist')?.innerText.trim();
+                const views = entry.querySelector('.views')?.innerText.trim();
 
-        return apiResponse('success', "data loaded Successfully", result, 201, res)
+                data.push({ rank, title, artist, views });
+            });
+
+            return { data, entries };
+
+
+
+            // const rows = Array.from(document.querySelectorAll('.style-scope'));
+            // const chartData = rows.map(row => {
+            //     const Rank = row.querySelector('.rankForTrendingVideoEntity ').innerText.trim();
+            //     // const Podcast = row.querySelector('a')?.innerText.trim(); // Adjust this based on your actual structure
+
+            //     return {
+            //         Rank,
+            //         // Podcast,
+            //     };
+            // });
+
+            // return { chartData, headers };
+
+        });
+
+
+        await browser.close();
+
+        console.log(data, 'formatedData ----------->');
+        return
 
     } catch (error) {
-        apiResponse('fail', "No Users were found", {}, 500, res)
-
+        console.error(error);
+        return apiResponse('fail', "No data were found", 500, res);
     }
 }
 
 // facing issue
 exports.getYoutubeTrends = async (req, res) => {
+
     try {
-        const chartData = [];
-        const response = await fetch("https://www.youtube.com/feed/trending?app=desktop&hl=de&gl=DE")
-        const result = await response.text()
+        const browser = await puppeteer.launch({ headless: true });
+        const page = await browser.newPage();
 
-        const $ = cheerio.load(result)
+        await page.goto('https://www.youtube.com/feed/trending', { waitUntil: "networkidle2" }); // Replace with your actual URL
+        await page.waitForSelector('#contents', { visible: true, timeout: 6000 });
 
-        console.log($.text()); // Log the entire HTML
-
-        console.log($('#contents').length);
+        const content = await page.content();
 
 
-        return apiResponse('success', "data loaded Successfully", result, 201, res)
+        // Extract the table headers and body data
+        const data = await page.evaluate(() => {
+            const data = []
+            const entries = document.querySelectorAll('#grid-container');
+            console.log(entries, 'entries ----------->');
+
+
+            // entries.forEach(entry => {
+            //     const rank = entry.querySelector('#title-wrapper #video-title')?.innerText.trim();
+            //     const name = entry.querySelector('#title-wrapper #channel-name')?.innerText.trim();
+            //     // const artist = entry.querySelector('.artist')?.innerText.trim();
+            //     // const views = entry.querySelector('.views')?.innerText.trim();
+
+            //     data.push({ rank, name });
+            // });
+
+            return { entries };
+        });
+
+
+        // await browser.close();
+
+        console.log(data, 'formatedData ----------->');
+        return
 
     } catch (error) {
-        apiResponse('fail', "No Users were found", {}, 500, res)
-
+        console.error(error);
+        return apiResponse('fail', "No data were found", 500, res);
     }
 }
 
