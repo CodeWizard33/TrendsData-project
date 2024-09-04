@@ -540,12 +540,28 @@ const getGamesTrends = async (req, res) => {
             const $ele = $(ele);
 
             const data = $ele.find('.test-list .media-right').map((i, item) => {
-                return { position: i + 1, Name: $(item).find('a').text(), release: $(item).find('.info').eq(2).text() }
+                return {
+                    position: i + 1,
+                    Name: $(item).find('a').text(),
+                    release: $(item).find('.info').eq(2).text(),
+                }
             }).get()
 
+            const rating = $ele.find('.points').map((i, item) => {
+
+                return $(item).text().split('G')[0]
+
+            }).get()
+
+            const joinedArr = rating.map((ele, index) => {
+                return {
+                    ...data[index],
+                    rating: ele
+                };
+            });
 
             if (!formatedData) {
-                formatedData = data
+                formatedData = joinedArr
             }
         })
 
