@@ -109,12 +109,12 @@ const getAllGemeineTrends = async () => {
     }
 }
 
-// issue in this controller will fix it soon
+// Ok
 const getGoogleTrends = async (req, res) => {
     const formatedData = [];
 
     try {
-        const browser = await puppeteer.launch({ headless: true });
+        const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
         const page = await browser.newPage();
 
         await page.goto('https://trends.google.de/trending?geo=DE&hl=de'); // Replace with your actual URL
@@ -363,7 +363,7 @@ const getPodcastTrends = async (req, res) => {
     const formatedData = [];
 
     try {
-        const browser = await puppeteer.launch({ headless: true });
+        const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] })
         const page = await browser.newPage();
 
         await page.goto('https://podwatch.io/charts/'); // Replace with your actual URL
@@ -425,7 +425,7 @@ exports.getYoutubeChartTrends = async (req, res) => {
     const formatedData = [];
 
     try {
-        const browser = await puppeteer.launch({ headless: true });
+        const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] })
         const page = await browser.newPage();
 
         await page.goto('https://charts.youtube.com/de', { waitUntil: "networkidle2" }); // Replace with your actual URL
@@ -439,7 +439,7 @@ exports.getYoutubeChartTrends = async (req, res) => {
         // Extract the table headers and body data
         const data = await page.evaluate(() => {
             const data = []
-            const entries = document.querySelectorAll('ytmc-entity-row-v2 .trendingVideoEntity');
+            const entries = document.querySelectorAll('.chart-entries-container .style-scope');
             // const headers = Array.from(document.querySelectorAll('#chart-entries-container')).map(th => th.innerText.trim());
 
             entries.forEach(entry => {
@@ -486,7 +486,7 @@ exports.getYoutubeChartTrends = async (req, res) => {
 exports.getYoutubeTrends = async (req, res) => {
 
     try {
-        const browser = await puppeteer.launch({ headless: true });
+        const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] })
         const page = await browser.newPage();
 
         await page.goto('https://www.youtube.com/feed/trending', { waitUntil: "networkidle2" }); // Replace with your actual URL

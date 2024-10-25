@@ -8,6 +8,8 @@ const trendRouter = require('./routes/trendRoutes');
 const cookieParser = require('cookie-parser');
 const { rateLimit } = require('express-rate-limit');
 
+
+app.set('trust proxy', 1)
 app.get('/', (req, res) => {
     res.status(200).send('<h1 style="text-align:center">server created successfully!</h1>')
 })
