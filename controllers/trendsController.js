@@ -45,16 +45,16 @@ exports.getAllApiResponses = async (req, res) => {
                 "url": "https://appfigures.com/top-apps/ios-app-store/germany/iphone/top-overall",
                 "data": appTrends.splice(3)
             },
-            {
-                "source": "PodCast Trends",
-                "url": "https://podwatch.io/charts/",
-                "data": podcastTrends.flat().splice(0, 20)
-            },
-            {
-                "source": "Google Trends",
-                "url": "https://trends.google.de/trending?geo=DE&hl=de",
-                "data": googleTrends
-            },
+            // {
+            //     "source": "PodCast Trends",
+            //     "url": "https://podwatch.io/charts/",
+            //     "data": podcastTrends.flat().splice(0, 20)
+            // },
+            // {
+            //     "source": "Google Trends",
+            //     "url": "https://trends.google.de/trending?geo=DE&hl=de",
+            //     "data": googleTrends
+            // },
 
         )        
 
