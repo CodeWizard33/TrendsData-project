@@ -10,41 +10,41 @@ exports.getAllApiResponses = async (req, res) => {
     try {
         const { 0: gemeineTrends, 1: tiktokTrends, 2: netflixTrends, 3: spotifyChartTrends, 4: dpaTrends, 5: gamesTrends, 6: appTrends, 7: podcastTrends, 8: googleTrends } = await Promise.all([await getAllGemeineTrends(), await getTiktokTrends(), await getNetflixTrends(), await getSpotifyChartTrends(), await getDPATrends(), await getGamesTrends(), await getAppsTrends(), await getPodcastTrends(), await getGoogleTrends()])
         allApiResponses.push(
-            {
-                "source": "Trends24",
-                "url": "https://trends24.in/germany/",
-                "data": gemeineTrends[0]
-            },
-            {
-                "source": "Tiktok Hashtags",
-                "url": "https://ads.tiktok.com/business/creativecenter/inspiration/popular/hashtag/pc/en?from=001010",
-                "data": tiktokTrends
-            },
-            {
-                "source": "Top 10 Movies",
-                "url": "https://www.whats-on-netflix.com/most-popular/",
-                "data": netflixTrends
-            },
-            {
-                "source": "Spotify Chart Trends",
-                "url": "https://kworb.net/spotify/country/de_daily.html",
-                "data": spotifyChartTrends
-            },
-            {
-                "source": "DPA Trends",
-                "url": "https://dpa-factchecking.com/germany",
-                "data": dpaTrends
-            },
-            {
-                "source": "Games Trends",
-                "url": "https://www.gamestar.de/charts/",
-                "data": gamesTrends
-            },
-            {
-                "source": "App Trends",
-                "url": "https://appfigures.com/top-apps/ios-app-store/germany/iphone/top-overall",
-                "data": appTrends.splice(3)
-            },
+            // {
+            //     "source": "Trends24",
+            //     "url": "https://trends24.in/germany/",
+            //     "data": gemeineTrends[0]
+            // },
+            // {
+            //     "source": "Tiktok Hashtags",
+            //     "url": "https://ads.tiktok.com/business/creativecenter/inspiration/popular/hashtag/pc/en?from=001010",
+            //     "data": tiktokTrends
+            // },
+            // {
+            //     "source": "Top 10 Movies",
+            //     "url": "https://www.whats-on-netflix.com/most-popular/",
+            //     "data": netflixTrends
+            // },
+            // {
+            //     "source": "Spotify Chart Trends",
+            //     "url": "https://kworb.net/spotify/country/de_daily.html",
+            //     "data": spotifyChartTrends
+            // },
+            // {
+            //     "source": "DPA Trends",
+            //     "url": "https://dpa-factchecking.com/germany",
+            //     "data": dpaTrends
+            // },
+            // {
+            //     "source": "Games Trends",
+            //     "url": "https://www.gamestar.de/charts/",
+            //     "data": gamesTrends
+            // },
+            // {
+            //     "source": "App Trends",
+            //     "url": "https://appfigures.com/top-apps/ios-app-store/germany/iphone/top-overall",
+            //     "data": appTrends.splice(3)
+            // },
             {
                 "source": "PodCast Trends",
                 "url": "https://podwatch.io/charts/",
