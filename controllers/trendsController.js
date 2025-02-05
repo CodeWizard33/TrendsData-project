@@ -100,42 +100,6 @@ const getAllGemeineTrends = async () => {
     }
 }
 
-// Ok
-const getGoogleTrends = async (req, res) => {
-    const formatedData = [];
-
-    try {
-        const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
-        const page = await browser.newPage();
-
-        await page.goto('https://trends.google.de/trending?geo=DE&hl=de',{timeout:60000}); // Replace with your actual URL
-        await page.waitForSelector('.enOdEe-wZVHld-zg7Cn' || 'table');
-
-        const data = await page.evaluate(() => {
-            const rows = Array.from(document.querySelectorAll('tbody tr'));
-            const data = rows.map(row => {
-                const Angesagt = row.querySelector('.mZ3RIc')?.innerText.trim();
-                const Suchvolumen = row.querySelector('.lqv0Cb')?.innerText.trim(); // Adjust this based on your actual structure
-                const Gestartet = row.querySelector('.vdw3Ld')?.innerText.trim(); // Adjust this based on your actual structure
-                return {
-                    Angesagt,
-                    Suchvolumen,
-                    Gestartet
-                };
-            });
-
-            return data
-        });
-
-        await browser.close();
-        formatedData.push(...data)
-        return formatedData
-
-    } catch (error) {
-        console.error(error);
-    }
-}
-
 // ok
 const getTiktokTrends = async (req, res) => {
     try {
@@ -354,13 +318,13 @@ const getPodcastTrends = async (req, res) => {
     const formatedData = [];
 
     try {
-        const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'],timeout: 60000, })
+        const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'],timeout: 120000, })
         const page = await browser.newPage();
 
-        await page.goto('https://podwatch.io/charts/',{timeout:60000}); // Replace with your actual URL
+        await page.goto('https://podwatch.io/charts/', { waitUntil: 'networkidle2', timeout: 120000 }); // Replace with your actual URL
 
         // Wait for the specific element to be rendered by Vue.js
-        await page.waitForSelector('.top_100_charts');
+        await page.waitForSelector('.top_100_charts', { waitUntil: 'networkidle2', timeout: 120000 });
 
         // Extract the table headers and body data
         const data = await page.evaluate(() => {
@@ -390,6 +354,42 @@ const getPodcastTrends = async (req, res) => {
         return apiResponse('fail', "No data were found", 500, res);
     }
 
+}
+
+// Ok
+const getGoogleTrends = async (req, res) => {
+    const formatedData = [];
+
+    try {
+        const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'], timeout:120000 });
+        const page = await browser.newPage();
+
+        await page.goto('https://trends.google.de/trending?geo=DE&hl=de', { waitUntil: 'networkidle2', timeout: 120000 }); // Replace with your actual URL
+        await page.waitForSelector('.enOdEe-wZVHld-zg7Cn' || 'table', { waitUntil: 'networkidle2', timeout: 120000 });
+
+        const data = await page.evaluate(() => {
+            const rows = Array.from(document.querySelectorAll('tbody tr'));
+            const data = rows.map(row => {
+                const Angesagt = row.querySelector('.mZ3RIc')?.innerText.trim();
+                const Suchvolumen = row.querySelector('.lqv0Cb')?.innerText.trim(); // Adjust this based on your actual structure
+                const Gestartet = row.querySelector('.vdw3Ld')?.innerText.trim(); // Adjust this based on your actual structure
+                return {
+                    Angesagt,
+                    Suchvolumen,
+                    Gestartet
+                };
+            });
+
+            return data
+        });
+
+        await browser.close();
+        formatedData.push(...data)
+        return formatedData
+
+    } catch (error) {
+        console.error(error);
+    }
 }
 
 // getting upexpected data result
