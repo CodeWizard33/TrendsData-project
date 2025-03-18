@@ -1,17 +1,17 @@
 const express = require('express');
 const app = express();
-require('dotenv').config()
-const { connectDb } = require('./DB/db');
+require('dotenv').config({})
 const authRouter = require('./routes/authRoutes');
 const productRouter = require('./routes/productRoutes');
 const trendRouter = require('./routes/trendRoutes');
 const cookieParser = require('cookie-parser');
 const { rateLimit } = require('express-rate-limit');
 
+const PORT = process.env.PORT
 
 app.set('trust proxy', 1)
 app.get('/', (req, res) => {
-    res.status(200).send('<h1 style="text-align:center">server created successfully!</h1>')
+    res.status(200).send('<h1 style="text-align:center">server is listening!</h1>')
 })
 
 const limiter = rateLimit({
@@ -31,8 +31,8 @@ app.all('*', (req, res, next) => {
     res.status(404).send('Sorry, we could not find that route!');
 });
 
-app.listen(3002, () => {
-    console.info('app is listening on port 3002');
+app.listen(PORT, () => {
+    console.info('app is listening on port ',PORT);
 })
 
 // connectDb()

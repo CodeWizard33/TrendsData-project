@@ -4,11 +4,20 @@ const puppeteer = require('puppeteer')
 
 
 // loading all Api's response into a single controller 
-exports.getAllApiResponses = async (req, res) => {
+exports.getAllApiTrends1Response = async (req, res) => {
 
-    const allApiResponses = [];    
+    const allApiResponses = [];
     try {
-        const { 0: gemeineTrends, 1: tiktokTrends, 2: netflixTrends, 3: spotifyChartTrends, 4: dpaTrends, 5: gamesTrends, 6: appTrends, 7: podcastTrends, 8: googleTrends } = await Promise.all([await getAllGemeineTrends(), await getTiktokTrends(), await getNetflixTrends(), await getSpotifyChartTrends(), await getDPATrends(), await getGamesTrends(), await getAppsTrends(), await getPodcastTrends(), await getGoogleTrends()])
+        const { 0: gemeineTrends, 1: tiktokTrends, 2: netflixTrends, 3: spotifyChartTrends, 4: dpaTrends,
+      
+        } = await Promise.all([
+            await getAllGemeineTrends(),
+            await getTiktokTrends(),
+            await getNetflixTrends(),
+            await getSpotifyChartTrends(),
+            await getDPATrends(),
+      
+        ])
         allApiResponses.push(
             {
                 "source": "Trends24",
@@ -35,6 +44,29 @@ exports.getAllApiResponses = async (req, res) => {
                 "url": "https://dpa-factchecking.com/germany",
                 "data": dpaTrends
             },
+        )
+
+        return apiResponse('success', 'data loaded successfully', allApiResponses, 200, res)
+
+
+    } catch (error) {
+        apiResponse('fail', 'server error', {}, 500, res)
+    }
+}
+
+exports.getAllApiTrends2Response = async (req, res) => {
+
+    const allApiResponses = [];
+    try {
+        const { 
+            0: gamesTrends, 1: appTrends, 2: podcastTrends, 3: googleTrends 
+        } = await Promise.all([
+            await getGamesTrends(),
+            await getAppsTrends(),
+            await getPodcastTrends(),
+            await getGoogleTrends()
+        ])
+        allApiResponses.push(
             {
                 "source": "Games Trends",
                 "url": "https://www.gamestar.de/charts/",
@@ -56,7 +88,7 @@ exports.getAllApiResponses = async (req, res) => {
                 "data": googleTrends
             },
 
-        )        
+        )
 
         return apiResponse('success', 'data loaded successfully', allApiResponses, 200, res)
 
@@ -318,7 +350,7 @@ const getPodcastTrends = async (req, res) => {
     const formatedData = [];
 
     try {
-        const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'],timeout: 120000, })
+        const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'], timeout: 120000, })
         const page = await browser.newPage();
 
         await page.goto('https://podwatch.io/charts/', { waitUntil: 'networkidle2', timeout: 120000 }); // Replace with your actual URL
@@ -361,7 +393,7 @@ const getGoogleTrends = async (req, res) => {
     const formatedData = [];
 
     try {
-        const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'], timeout:120000 });
+        const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'], timeout: 120000 });
         const page = await browser.newPage();
 
         await page.goto('https://trends.google.de/trending?geo=DE&hl=de', { waitUntil: 'networkidle2', timeout: 120000 }); // Replace with your actual URL
@@ -416,10 +448,10 @@ exports.getYoutubeChartTrends = async (req, res) => {
     const formatedData = [];
 
     try {
-        const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'],timeout: 60000, })
+        const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'], timeout: 60000, })
         const page = await browser.newPage();
 
-        await page.goto('https://charts.youtube.com/de', { waitUntil: "networkidle2",timeout:60000 }); // Replace with your actual URL
+        await page.goto('https://charts.youtube.com/de', { waitUntil: "networkidle2", timeout: 60000 }); // Replace with your actual URL
         await page.waitForSelector('#chart-entries-container', { visible: true, timeout: 6000 });
 
         const content = await page.content();
@@ -476,10 +508,10 @@ exports.getYoutubeChartTrends = async (req, res) => {
 exports.getYoutubeTrends = async (req, res) => {
 
     try {
-        const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'],timeout: 60000, })
+        const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'], timeout: 60000, })
         const page = await browser.newPage();
 
-        await page.goto('https://www.youtube.com/feed/trending', { waitUntil: "networkidle2",timeout:60000 }); // Replace with your actual URL
+        await page.goto('https://www.youtube.com/feed/trending', { waitUntil: "networkidle2", timeout: 60000 }); // Replace with your actual URL
         await page.waitForSelector('#contents', { visible: true, timeout: 6000 });
 
         const content = await page.content();
