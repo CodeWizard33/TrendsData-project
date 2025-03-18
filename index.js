@@ -7,7 +7,7 @@ const trendRouter = require('./routes/trendRoutes');
 const cookieParser = require('cookie-parser');
 const { rateLimit } = require('express-rate-limit');
 
-const PORT = process.env.PORT
+const PORT = process.env.PORT || 3004
 
 app.set('trust proxy', 1)
 app.get('/', (req, res) => {
@@ -21,6 +21,9 @@ const limiter = rateLimit({
 });
 
 app.use('/api', limiter)
+
+console.log(PORT,'port');
+
 
 
 app.use(express.json())
