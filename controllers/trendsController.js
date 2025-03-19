@@ -4,19 +4,23 @@ const puppeteer = require('puppeteer')
 
 
 // loading all Api's response into a single controller 
-exports.getAllApiTrends1Response = async (req, res) => {
-
+exports.getAllApiTrendsResponse = async (req, res) => {
     const allApiResponses = [];
+    
     try {
         const { 0: gemeineTrends, 1: tiktokTrends, 2: netflixTrends, 3: spotifyChartTrends, 4: dpaTrends,
-      
+            5: gamesTrends, 6: appTrends, 7: podcastTrends, 8: googleTrends
         } = await Promise.all([
             await getAllGemeineTrends(),
             await getTiktokTrends(),
             await getNetflixTrends(),
             await getSpotifyChartTrends(),
             await getDPATrends(),
-      
+            await getGamesTrends(),
+            await getAppsTrends(),
+            await getPodcastTrends(),
+            await getGoogleTrends()
+
         ])
         allApiResponses.push(
             {
@@ -37,7 +41,77 @@ exports.getAllApiTrends1Response = async (req, res) => {
             {
                 "source": "Spotify Chart Trends",
                 "url": "https://kworb.net/spotify/country/de_daily.html",
-                "data": spotifyChartTrends
+                "data": spotifyChartTrends.splice(0,20)
+            },
+            {
+                "source": "DPA Trends",
+                "url": "https://dpa-factchecking.com/germany",
+                "data": dpaTrends
+            },
+            {
+                "source": "Games Trends",
+                "url": "https://www.gamestar.de/charts/",
+                "data": gamesTrends
+            },
+            {
+                "source": "App Trends",
+                "url": "https://appfigures.com/top-apps/ios-app-store/germany/iphone/top-overall",
+                "data": appTrends.splice(3)
+            },
+            {
+                "source": "PodCast Trends",
+                "url": "https://podwatch.io/charts/",
+                "data": podcastTrends.flat().splice(0, 20)
+            },
+            {
+                "source": "Google Trends",
+                "url": "https://trends.google.de/trending?geo=DE&hl=de",
+                "data": googleTrends
+            },
+        )
+
+        return apiResponse('success', 'data loaded successfully', allApiResponses, 200, res)
+
+
+    } catch (error) {
+        apiResponse('fail', 'server error', {}, 500, res)
+    }
+}
+exports.getAllApiTrends1Response = async (req, res) => {
+    const allApiResponses = [];
+
+    try {
+        const { 0: gemeineTrends, 1: tiktokTrends, 2: netflixTrends, 3: spotifyChartTrends, 4: dpaTrends,
+
+        } = await Promise.all([
+            await getAllGemeineTrends(),
+            await getTiktokTrends(),
+            await getNetflixTrends(),
+            await getSpotifyChartTrends(),
+            await getDPATrends(),
+
+        ])
+        allApiResponses.push(
+            {
+                "source": "Trends24",
+                "url": "https://trends24.in/germany/",
+                "data": gemeineTrends[0]
+            },
+            {
+                "source": "Tiktok Hashtags",
+                "url": "https://ads.tiktok.com/business/creativecenter/inspiration/popular/hashtag/pc/en?from=001010",
+                "data": tiktokTrends
+            },
+            {
+                "source": "Top 10 Movies",
+                "url": "https://www.whats-on-netflix.com/most-popular/",
+                "data": netflixTrends
+            },
+            {
+                "source": "Spotify Chart Trends",
+                "url": "https://kworb.net/spotify/country/de_daily.html",
+                "data": spotifyChartTrends.splice(0,20)
+
             },
             {
                 "source": "DPA Trends",
@@ -53,13 +127,12 @@ exports.getAllApiTrends1Response = async (req, res) => {
         apiResponse('fail', 'server error', {}, 500, res)
     }
 }
-
 exports.getAllApiTrends2Response = async (req, res) => {
 
     const allApiResponses = [];
     try {
-        const { 
-            0: gamesTrends, 1: appTrends, 2: podcastTrends, 3: googleTrends 
+        const {
+            0: gamesTrends, 1: appTrends, 2: podcastTrends, 3: googleTrends
         } = await Promise.all([
             await getGamesTrends(),
             await getAppsTrends(),
